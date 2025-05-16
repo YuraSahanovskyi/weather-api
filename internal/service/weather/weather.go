@@ -1,4 +1,4 @@
-package service
+package weather
 
 import (
 	"encoding/json"
@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/YuraSahanovskyi/weather-api/internal/model"
+	"github.com/YuraSahanovskyi/weather-api/internal/domain"
 )
 
-type weatherAPIResponse struct {
+type weatherApiResponse struct {
 	Current struct {
 		TempC     float64 `json:"temp_c"`
 		Humidity  int     `json:"humidity"`
@@ -28,20 +28,30 @@ type errorApiResponse struct {
 	} `json:"error"`
 }
 
-type CityNotFound struct {
+type CityNotFoundError struct {
 	city string
 }
 
-func (c CityNotFound) Error() string {
-	return fmt.Sprintf("City %s not found", c.city)
+func (c CityNotFoundError) Error() string {
+	return fmt.Sprintf("city %s not found", c.city)
 }
 
-func GetWeather(city string) (*model.Weather, error) {
-	key := os.Getenv("API_KEY")
-	if key == "" {
-		panic("API_KEY env variable not found")
+var apiKey string
+
+func ReadApiKey() {
+	apiKey = os.Getenv("API_KEY")
+	if apiKey == "" {
+		log.Fatal("API_KEY is not set")
 	}
-	res, err := http.Get(fmt.Sprintf("http://api.weatherapi.com/v1/current.json?key=%s&q=%s", key, city))
+}
+
+const API_URL string = "http://api.weatherapi.com/v1/current.json?key=%s&q=%s"
+
+func GetWeather(city string) (*domain.Weather, error) {
+
+	url := fmt.Sprintf(API_URL, apiKey, city)
+	res, err := http.Get(url)
+
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -55,17 +65,19 @@ func GetWeather(city string) (*model.Weather, error) {
 	if res.StatusCode != http.StatusOK {
 		return nil, handleApiError(city, body)
 	}
-	var weather weatherAPIResponse
+	var weather weatherApiResponse
 	if err := json.Unmarshal(body, &weather); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON: %w", err)
 	}
 
-	return &model.Weather{
+	return &domain.Weather{
 		Temperature: weather.Current.TempC,
 		Humidity:    weather.Current.Humidity,
 		Description: weather.Current.Condition.Text,
 	}, nil
 }
+
+const NOT_FOUND_CODE int = 1006
 
 func handleApiError(city string, body []byte) error {
 	var res errorApiResponse
@@ -74,8 +86,8 @@ func handleApiError(city string, body []byte) error {
 	}
 	log.Println(res)
 	switch res.Error.Code {
-	case 1006:
-		return CityNotFound{city: city}
+	case NOT_FOUND_CODE:
+		return CityNotFoundError{city: city}
 	default:
 		return fmt.Errorf("bad request")
 	}

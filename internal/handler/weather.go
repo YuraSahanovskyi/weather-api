@@ -2,28 +2,26 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
-	"github.com/YuraSahanovskyi/weather-api/internal/service"
+	"github.com/YuraSahanovskyi/weather-api/internal/service/weather"
 	"github.com/gin-gonic/gin"
 )
 
 func GetWeather(c *gin.Context) {
 	city := c.Query("city")
 	if city == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "city is required"})
+		c.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
-	weather, err := service.GetWeather(city)
+	data, err := weather.GetWeather(city)
 	if err != nil {
-		log.Println("[ERROR]", err)
-		if errors.As(err, &service.CityNotFound{}) {
-			c.AbortWithStatus(http.StatusNotFound)
-			return
+		if errors.As(err, &weather.CityNotFoundError{}) {
+			_ = c.AbortWithError(http.StatusNotFound, err)
+		} else {
+			_ = c.AbortWithError(http.StatusInternalServerError, err)
 		}
-		_ = c.Error(err)
-		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
-	c.JSON(http.StatusOK, weather)
+	c.JSON(http.StatusOK, data)
 }
