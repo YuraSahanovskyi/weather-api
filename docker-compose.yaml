@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    env_file:
+      - postgres.env
+    ports:
+      - '5432:5432'
+    networks:
+      - services
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  weather-api:
+    build: .
+    ports:
+      - "8080:8080"
+    networks:
+      - services
+    env_file:
+      - weather-api.env
+    depends_on:
+      - postgres
+networks:
+  services:
+
+volumes:
+  pgdata:
