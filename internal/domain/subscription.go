@@ -10,7 +10,7 @@ type Subscription struct {
 	City      string
 	Frequency Frequency
 	Confirmed bool
-	Token string
+	Token     string
 }
 
 type Frequency int
@@ -31,7 +31,11 @@ var frequencyValue = map[string]Frequency{
 }
 
 func (f Frequency) String() string {
-	return frequencyName[f]
+	name, ok := frequencyName[f]
+	if !ok {
+		return "invalid frequency"
+	}
+	return name
 }
 
 func ParseFrequency(frequencyName string) (*Frequency, error) {

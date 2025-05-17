@@ -10,6 +10,6 @@ func RegisterRoutes(r *gin.Engine) {
 		api.GET("/weather", GetWeather)
 		api.POST("/subscribe", Subscribe)
 		api.GET("/confirm/:token", ConfirmSubscription)
-		// api.GET("/unsubscribe/:token", Unsubscribe)
+		api.GET("/unsubscribe/:token", Unsubscribe)
 	}
 }

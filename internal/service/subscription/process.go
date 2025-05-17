@@ -17,10 +17,10 @@ func ProcessSubscribers(frequency domain.Frequency) {
 	for _, sub := range subs {
 		weather, err := weather.GetWeather(sub.City)
 		if err != nil {
-			log.Println("failed to get weather")
+			log.Println("failed to get weather:", err)
 		}
-		if err := email.SendWeatherEmail(sub.Email, sub.City, *weather); err != nil {
-			log.Println("failed to send email")
+		if err := email.SendWeatherEmail(sub.Email, sub.City, *weather, sub.Token); err != nil {
+			log.Println("failed to send email:", err)
 		}
 	}
 

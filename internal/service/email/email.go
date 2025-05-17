@@ -71,7 +71,38 @@ If you did not request this, please ignore this email.
 	return nil
 }
 
-func SendWeatherEmail(email string, city string, weather domain.Weather) error {
-	log.Println("Sending an email to", email, "about", city, )
+func SendWeatherEmail(toEmail string, city string, weather domain.Weather, token string) error {
+	to := []string{toEmail}
+
+	unsubscribeLink := fmt.Sprintf("%s:%s/api/unsubscribe/%s", config.GetAppHost(), config.GetAppPort(), token)
+
+	subject := fmt.Sprintf("Weather update for %s", city)
+	body := fmt.Sprintf(`Hello!
+
+Here's the latest weather update for %s:
+
+Temperature: %.1f°C
+Humidity: %d%%
+Description: %s
+
+If you no longer wish to receive these emails, you can unsubscribe using the link below:
+%s
+`, city, weather.Temperature, weather.Humidity, weather.Description, unsubscribeLink)
+
+	message := []byte(fmt.Sprintf("From: %s\r\n", smtpCred.from) +
+		fmt.Sprintf("To: %s\r\n", to[0]) +
+		fmt.Sprintf("Subject: %s\r\n", subject) +
+		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
+		"\r\n" +
+		body)
+
+	auth := smtp.PlainAuth("", smtpCred.user, smtpCred.password, smtpCred.host)
+
+	err := smtp.SendMail(smtpCred.host+":"+smtpCred.port, auth, smtpCred.from, to, message)
+	if err != nil {
+		return fmt.Errorf("error sending weather email: %w", err)
+	}
+
+	log.Println("Weather email sent to", toEmail)
 	return nil
 }
