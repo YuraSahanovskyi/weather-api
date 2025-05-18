@@ -4,7 +4,9 @@ Allows users to subscribe for weather updates for a selected city.
 
 ## Demo
 > If you can`t find email in you inbox, check spam, it is probably there
+
 HTML form https://yurasahanovskyi.github.io/weather-api/
+
 Api host https://weather-api-dojf.onrender.com
 
 ## How to run localy
