@@ -30,6 +30,15 @@ func Init() {
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %v", err)
 	}
+	// Partial unique index to enforce unique email only for active subscriptions
+	err = DB.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_active_email
+		ON subscriptions (email)
+		WHERE deleted_at IS NULL
+	`).Error
+	if err != nil {
+		log.Fatalf("Failed to create partial index: %v", err)
+	}
 
 	log.Println("Connected to DB")
 }
