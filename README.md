@@ -3,7 +3,7 @@ Weather API Application for Genesis Software Engineering School
 Allows users to subscribe for weather updates for a selected city.
 
 ## Demo
-> If you can`t find email in you inbox, check spam, it is probably there
+> If you can`t find email in your inbox, check spam, it is probably there
 
 HTML form https://yurasahanovskyi.github.io/weather-api/
 
