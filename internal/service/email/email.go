@@ -1,6 +1,7 @@
 package email
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/YuraSahanovskyi/weather-api/internal/config"
 	"github.com/YuraSahanovskyi/weather-api/internal/domain"
+	"github.com/YuraSahanovskyi/weather-api/internal/templates"
 )
 
 type smtpCredentials struct {
@@ -36,73 +38,69 @@ func InitSMTP() {
 		password: password,
 		from:     from,
 	}
+
+	templates.LoadTemplates()
 }
 
-func SendConfirmEmail(toEmail string, token string) error {
+func buildEmail(to, subject, body string) ([]byte, error) {
+	var buf bytes.Buffer
+	err := templates.SMTPHeaderTemplate.Execute(&buf, map[string]string{
+		"From":    smtpCred.from,
+		"To":      to,
+		"Subject": subject,
+		"Body":    body,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to render email headers: %w", err)
+	}
+	return buf.Bytes(), nil
+}
 
-	to := []string{toEmail}
-
-	confirmLink := fmt.Sprintf("%s:%s/api/confirm/%s", config.GetAppHost(), config.GetAppPort(), token)
-
-	subject := "Confirm Your Subscription"
-	body := fmt.Sprintf(`Hello!
-
-Please confirm your subscription by clicking the link below:
-%s
-
-If you did not request this, please ignore this email.
-`, confirmLink)
-
-	message := []byte(fmt.Sprintf("From: %s\r\n", smtpCred.from) +
-		fmt.Sprintf("To: %s\r\n", to[0]) +
-		fmt.Sprintf("Subject: %s\r\n", subject) +
-		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
-		"\r\n" +
-		body)
+func sendEmail(to string, subject string, body string) error {
+	msg, err := buildEmail(to, subject, body)
+	if err != nil {
+		return err
+	}
 
 	auth := smtp.PlainAuth("", smtpCred.user, smtpCred.password, smtpCred.host)
 
-	err := smtp.SendMail(smtpCred.host+":"+smtpCred.port, auth, smtpCred.from, to, message)
+	err = smtp.SendMail(smtpCred.host+":"+smtpCred.port, auth, smtpCred.from, []string{to}, msg)
 	if err != nil {
 		return fmt.Errorf("error sending email: %w", err)
 	}
 
-	log.Println("Email sent successfully!")
+	log.Println("Email sent successfully to", to)
 	return nil
 }
 
-func SendWeatherEmail(toEmail string, city string, weather domain.Weather, token string) error {
-	to := []string{toEmail}
+func SendConfirmEmail(toEmail string, token string) error {
+	confirmLink := fmt.Sprintf("%s:%s/api/confirm/%s", config.GetAppHost(), config.GetAppPort(), token)
 
-	unsubscribeLink := fmt.Sprintf("%s:%s/api/unsubscribe/%s", config.GetAppHost(), config.GetAppPort(), token)
-
-	subject := fmt.Sprintf("Weather update for %s", city)
-	body := fmt.Sprintf(`Hello!
-
-Here's the latest weather update for %s:
-
-Temperature: %.1f°C
-Humidity: %d%%
-Description: %s
-
-If you no longer wish to receive these emails, you can unsubscribe using the link below:
-%s
-`, city, weather.Temperature, weather.Humidity, weather.Description, unsubscribeLink)
-
-	message := []byte(fmt.Sprintf("From: %s\r\n", smtpCred.from) +
-		fmt.Sprintf("To: %s\r\n", to[0]) +
-		fmt.Sprintf("Subject: %s\r\n", subject) +
-		"Content-Type: text/plain; charset=\"UTF-8\"\r\n" +
-		"\r\n" +
-		body)
-
-	auth := smtp.PlainAuth("", smtpCred.user, smtpCred.password, smtpCred.host)
-
-	err := smtp.SendMail(smtpCred.host+":"+smtpCred.port, auth, smtpCred.from, to, message)
+	var bodyBuf bytes.Buffer
+	err := templates.ConfirmTemplate.Execute(&bodyBuf, map[string]string{
+		"ConfirmLink": confirmLink,
+	})
 	if err != nil {
-		return fmt.Errorf("error sending weather email: %w", err)
+		return fmt.Errorf("failed to render confirm email template: %w", err)
 	}
 
-	log.Println("Weather email sent to", toEmail)
-	return nil
+	return sendEmail(toEmail, "Confirm Your Subscription", bodyBuf.String())
+}
+
+func SendWeatherEmail(toEmail string, city string, weather domain.Weather, token string) error {
+	unsubscribeLink := fmt.Sprintf("%s:%s/api/unsubscribe/%s", config.GetAppHost(), config.GetAppPort(), token)
+
+	var bodyBuf bytes.Buffer
+	err := templates.WeatherTemplate.Execute(&bodyBuf, map[string]interface{}{
+		"City":            city,
+		"Temperature":     weather.Temperature,
+		"Humidity":        weather.Humidity,
+		"Description":     weather.Description,
+		"UnsubscribeLink": unsubscribeLink,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to render weather email template: %w", err)
+	}
+
+	return sendEmail(toEmail, fmt.Sprintf("Weather update for %s", city), bodyBuf.String())
 }

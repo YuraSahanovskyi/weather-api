@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Update for {{.City}}</title>
+</head>
+<body>
+    <p>Hello!</p>
+    <p>Here's the latest weather update for {{.City}}:</p>
+    <ul>
+        <li>Temperature: {{printf "%.1f" .Temperature}} °C</li>
+        <li>Humidity: {{.Humidity}}%</li>
+        <li>Description: {{.Description}}</li>
+    </ul>
+    <p>If you no longer wish to receive these emails, you can unsubscribe using the link below:</p>
+    <p><a href="{{.UnsubscribeLink}}">{{.UnsubscribeLink}}</a></p>
+</body>
+</html>
