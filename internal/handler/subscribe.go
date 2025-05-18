@@ -21,7 +21,7 @@ func Subscribe(c *gin.Context) {
 
 	frequency, err := domain.ParseFrequency(input.Frequency)
 	if err != nil {
-		_ = c.AbortWithError(http.StatusBadRequest, fmt.Errorf("can`t parse frequency: %w", err))
+		respondError(c, http.StatusBadRequest, "frequency is invalid")
 		return
 	}
 
@@ -32,13 +32,13 @@ func Subscribe(c *gin.Context) {
 	}); err != nil {
 		switch{
 		case errors.As(err, &subscription.SubscriptionConflictError{}):
-			_ = c.AbortWithError(http.StatusConflict, err)
+			respondError(c, http.StatusConflict, "subscription for this email already exists")
 		default:
-			_ = c.AbortWithError(http.StatusInternalServerError, err)
+			respondError(c, http.StatusInternalServerError, "internal server error")
 		}
 		return
 	}
-	c.Status(http.StatusOK)
+	c.JSON(http.StatusOK, gin.H{"message": "confirm subscription with link in email"})
 }
 
 func parseInput(c *gin.Context) (*dto.SubscriptionDto, error) {
