@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weather API Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; }
+    form { margin-bottom: 2em; }
+    input, button { padding: 0.5em; margin: 0.5em 0; width: 100%; max-width: 300px; }
+    .result { margin-top: 1em; padding: 1em; border: 1px solid #ccc; max-width: 300px; }
+    .error { color: red; }
+    .success { color: green; }
+  </style>
+</head>
+<body>
+  <h1>Weather API Demo</h1>
+
+  <section>
+    <h2>Get Current Weather</h2>
+    <form id="weatherForm">
+      <label for="cityWeather">City:</label><br />
+      <input type="text" id="cityWeather" name="city" required />
+      <button type="submit">Get Weather</button>
+    </form>
+    <div id="weatherResult" class="result"></div>
+  </section>
+
+  <section>
+    <h2>Subscribe for Weather Updates</h2>
+    <form id="subscribeForm">
+      <label for="citySubscribe">City:</label><br />
+      <input type="text" id="citySubscribe" name="city" required />
+      <label for="emailSubscribe">Email:</label><br />
+      <input type="email" id="emailSubscribe" name="email" required />
+      <label for="frequencySubscribe">Frequency:</label><br />
+      <select id="frequencySubscribe" name="frequency" required>
+        <option value="hourly">Hourly</option>
+        <option value="daily">Daily</option>
+      </select>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div id="subscribeResult" class="result"></div>
+  </section>
+
+  <script>
+    const apiBase = 'https://weather-api-dojf.onrender.com/api';
+
+    // Weather form handler
+    document.getElementById('weatherForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const city = e.target.city.value.trim();
+      const resultEl = document.getElementById('weatherResult');
+      resultEl.textContent = 'Loading...';
+      resultEl.className = 'result';
+
+      try {
+        const res = await fetch(`${apiBase}/weather?city=${encodeURIComponent(city)}`);
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        resultEl.textContent = `Temperature: ${data.temperature}°C\nHumidity: ${data.humidity}%\nDescription: ${data.description}`;
+        resultEl.classList.add('success');
+      } catch (err) {
+        resultEl.textContent = err.message;
+        resultEl.classList.add('error');
+      }
+    });
+
+    // Subscribe form handler
+    document.getElementById('subscribeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const city = e.target.city.value.trim();
+      const email = e.target.email.value.trim();
+      const frequency = e.target.frequency.value;
+      const resultEl = document.getElementById('subscribeResult');
+      resultEl.textContent = 'Loading...';
+      resultEl.className = 'result';
+
+      try {
+        const res = await fetch(`${apiBase}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ city, email, frequency })
+        });
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => null);
+          const msg = errorData?.message || res.statusText;
+          throw new Error(`Error ${res.status}: ${msg}`);
+        }
+        const data = await res.json();
+        resultEl.textContent = data.message || 'Subscription successful! Please check your email to confirm.';
+        resultEl.classList.add('success');
+      } catch (err) {
+        resultEl.textContent = err.message;
+        resultEl.classList.add('error');
+      }
+    });
+  </script>
+</body>
+</html>
