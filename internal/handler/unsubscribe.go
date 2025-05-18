@@ -11,7 +11,7 @@ import (
 func Unsubscribe(c *gin.Context) {
 	token := c.Param("token")
 	if err := subscription.Unsubscribe(token); err != nil {
-		switch{
+		switch {
 		case errors.As(err, &subscription.InvalidTokenError{}):
 			respondError(c, http.StatusBadRequest, "token is invalid")
 		case errors.As(err, &subscription.TokenNotFoundError{}):

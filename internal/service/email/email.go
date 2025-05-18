@@ -74,7 +74,7 @@ func sendEmail(to string, subject string, body string) error {
 }
 
 func SendConfirmEmail(toEmail string, token string) error {
-	confirmLink := fmt.Sprintf("%s:%s/api/confirm/%s", config.GetAppHost(), config.GetAppPort(), token)
+	confirmLink := fmt.Sprintf("%s/api/confirm/%s", config.GetAppHost(), token)
 
 	var bodyBuf bytes.Buffer
 	err := templates.ConfirmTemplate.Execute(&bodyBuf, map[string]string{
@@ -88,7 +88,7 @@ func SendConfirmEmail(toEmail string, token string) error {
 }
 
 func SendWeatherEmail(toEmail string, city string, weather domain.Weather, token string) error {
-	unsubscribeLink := fmt.Sprintf("%s:%s/api/unsubscribe/%s", config.GetAppHost(), config.GetAppPort(), token)
+	unsubscribeLink := fmt.Sprintf("%s/api/unsubscribe/%s", config.GetAppHost(), token)
 
 	var bodyBuf bytes.Buffer
 	err := templates.WeatherTemplate.Execute(&bodyBuf, map[string]interface{}{

@@ -25,5 +25,5 @@ func main() {
 
 	handler.RegisterRoutes(r)
 
-	log.Fatalln(r.Run(":" + config.GetAppPort()))
+	log.Fatalln(r.Run("0.0.0.0:" + config.GetAppPort()))
 }

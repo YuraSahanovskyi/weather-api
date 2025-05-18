@@ -13,8 +13,8 @@ type config struct {
 var appConfig config
 
 func Init() {
-	appHost := os.Getenv("APP_HOST")
-	appPort := os.Getenv("APP_PORT")
+	appHost := os.Getenv("HOST")
+	appPort := os.Getenv("PORT")
 	if appHost == "" || appPort == "" {
 		log.Fatal("app host or app port are not found")
 	}

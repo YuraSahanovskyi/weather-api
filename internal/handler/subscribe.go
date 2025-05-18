@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/YuraSahanovskyi/weather-api/internal/dto"
 	"github.com/YuraSahanovskyi/weather-api/internal/domain"
+	"github.com/YuraSahanovskyi/weather-api/internal/dto"
 	"github.com/YuraSahanovskyi/weather-api/internal/service/subscription"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +30,7 @@ func Subscribe(c *gin.Context) {
 		City:      input.City,
 		Frequency: *frequency,
 	}); err != nil {
-		switch{
+		switch {
 		case errors.As(err, &subscription.SubscriptionConflictError{}):
 			respondError(c, http.StatusConflict, "subscription for this email already exists")
 		default:
